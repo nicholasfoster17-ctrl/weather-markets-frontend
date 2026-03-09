@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather Markets Production Beta</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#07101d;color:#eef5ff;margin:0;padding:24px}
+    .wrap{max-width:1100px;margin:auto}
+    .card{background:#0f1b31;border:1px solid #22365d;border-radius:16px;padding:18px;margin-bottom:16px}
+    .small{font-size:12px;color:#8ea4ca}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    button{padding:10px 14px;border:none;border-radius:10px;background:#3b82f6;color:white;font-weight:bold;cursor:pointer}
+    pre{white-space:pre-wrap;background:#0a1323;border:1px solid #22365d;border-radius:10px;padding:12px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Weather Markets Production Beta</h1>
+    <div class="small">Deployment-ready shell for Detroit weather, precipitation, tornado, and ancestry markets.</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <button onclick="load('/api/health')">Health</button>
+      <button onclick="load('/api/markets')">Markets</button>
+      <button onclick="load('/api/readiness-summary')">Readiness</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>API Output</h2>
+    <pre id="out">No request made yet.</pre>
+  </div>
+</div>
+
+<script>
+async function load(path){
+  try{
+    const res = await fetch(path);
+    document.getElementById('out').textContent = await res.text();
+  }catch(err){
+    document.getElementById('out').textContent = String(err);
+  }
+}
+</script>
+</body>
+</html>
