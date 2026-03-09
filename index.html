@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weather Markets Discovery Beta</title>
+  <title>Weather Markets Account Beta</title>
   <style>
-    body{font-family:Arial,sans-serif;background:#07101d;color:#eef5ff;margin:0;padding:24px}
-    .wrap{max-width:1450px;margin:auto}
-    .hero,.card{background:#0f1b31;border:1px solid #22365d;border-radius:16px;padding:18px;margin-bottom:16px}
+    body{font-family:Arial,sans-serif;background:#07101d;color:#eef5ff;margin:0;padding:16px}
+    .wrap{max-width:1560px;margin:auto}
+    .hero,.card,.modalcard{background:#0f1b31;border:1px solid #22365d;border-radius:16px;padding:16px;margin-bottom:16px}
     .small{font-size:12px;color:#8ea4ca}
-    .row{display:flex;gap:12px;flex-wrap:wrap}
-    .layout{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .layout{display:grid;grid-template-columns:1.02fr .98fr;gap:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+    .rightgrid{display:grid;grid-template-columns:1fr;gap:16px}
     .market{background:#0a1323;border:1px solid #22365d;border-radius:14px;padding:14px;cursor:pointer;position:relative}
     .market.active{outline:2px solid #3b82f6}
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#13203a;border:1px solid #22365d;font-size:11px;margin-right:6px;cursor:pointer}
     .pill.active{background:#1c3158;border-color:#3b82f6}
     button{padding:10px 14px;border:none;border-radius:10px;background:#3b82f6;color:white;font-weight:bold;cursor:pointer}
+    button.secondary{background:#1c3158}
     input,select{padding:10px;border-radius:10px;border:1px solid #22365d;background:#0a1323;color:#eef5ff;width:100%;box-sizing:border-box}
     pre{white-space:pre-wrap;background:#0a1323;border:1px solid #22365d;border-radius:10px;padding:12px;overflow:auto}
     h1,h2,h3{margin-top:0}
@@ -26,15 +28,44 @@
     .ticket-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .section-gap{margin-top:14px}
     .star{position:absolute;top:10px;right:10px;background:#13203a;border:1px solid #22365d;border-radius:999px;padding:5px 8px;font-size:12px}
-    .watchitem{background:#0a1323;border:1px solid #22365d;border-radius:12px;padding:12px;margin-bottom:10px}
-    @media (max-width: 950px){ .layout{grid-template-columns:1fr} }
+    .watchitem,.feeditem,.leaderitem,.trenditem,.notifyitem,.profileitem,.walletitem,.settingitem{background:#0a1323;border:1px solid #22365d;border-radius:12px;padding:12px;margin-bottom:10px}
+    .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+    .stat{background:#0a1323;border:1px solid #22365d;border-radius:12px;padding:12px}
+    .detail-title{font-size:18px;font-weight:700;margin-bottom:6px}
+    .detail-price{font-size:28px;font-weight:700;margin:8px 0}
+    .depth-row,.tape-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px 10px;border-bottom:1px solid #1b2c49}
+    .depth-head,.tape-head{font-size:12px;color:#8ea4ca;font-weight:bold}
+    .bidcell{color:#8ce1b0}
+    .askcell{color:#ffb4b4}
+    .switchline{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#0a1323;border:1px solid #22365d;border-radius:12px;padding:12px;margin-bottom:10px}
+    .switchline input{width:auto}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
+    .modal.show{display:flex}
+    .modalcard{max-width:480px;width:100%;margin:0}
+    @media (max-width: 980px){ .layout{grid-template-columns:1fr} }
+    @media (max-width: 640px){
+      body{padding:12px}
+      .ticket-grid,.stats{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr}
+      .hero,.card,.modalcard{padding:14px}
+      .price{font-size:22px}
+      .detail-price{font-size:24px}
+    }
   </style>
 </head>
 <body>
 <div class="wrap">
   <div class="hero">
-    <h1>Weather Markets Discovery Beta</h1>
-    <div class="small">Search, filter, watchlist, ticket, and portfolio scaffolding across Detroit weather, precipitation, tornado, and ancestry markets.</div>
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div>
+        <h1>Weather Markets Account Beta</h1>
+        <div class="small">Detroit weather, precipitation, tornado, and ancestry markets with account, wallet, settings, notifications, and exchange scaffolding.</div>
+      </div>
+      <div class="row">
+        <button class="secondary" onclick="openAuth('signin')">Sign In</button>
+        <button onclick="openAuth('signup')">Sign Up</button>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -75,17 +106,61 @@
       </div>
 
       <div class="card">
+        <h2>Trending Markets</h2>
+        <div id="trendingBox"></div>
+      </div>
+
+      <div class="card">
         <h2>Markets</h2>
         <div id="marketGroups"></div>
       </div>
     </div>
 
-    <div>
+    <div class="rightgrid">
+      <div class="card">
+        <h2>Profile</h2>
+        <div id="profileBox"></div>
+      </div>
+
+      <div class="card">
+        <h2>Wallet</h2>
+        <div id="walletBox"></div>
+        <div class="row section-gap">
+          <button onclick="walletAction('deposit')">Deposit</button>
+          <button class="secondary" onclick="walletAction('withdraw')">Withdraw</button>
+        </div>
+        <pre id="walletActionBox">No wallet action yet.</pre>
+      </div>
+
+      <div class="card">
+        <h2>Settings</h2>
+        <div id="settingsBox"></div>
+      </div>
+
+      <div class="card">
+        <h2>Market Detail</h2>
+        <div id="detailBox" class="small">No market selected yet.</div>
+      </div>
+
+      <div class="card">
+        <h2>Market Depth</h2>
+        <div class="depth-row depth-head">
+          <div>Bid Qty</div><div>Price</div><div>Ask Qty</div>
+        </div>
+        <div id="depthBox"></div>
+      </div>
+
+      <div class="card">
+        <h2>Trade Tape</h2>
+        <div class="tape-row tape-head">
+          <div>Time</div><div>Price</div><div>Qty</div>
+        </div>
+        <div id="tapeBox"></div>
+      </div>
+
       <div class="card">
         <h2>Market Ticket</h2>
-        <div id="selectedMarketBox" class="small">No market selected yet.</div>
-
-        <div class="ticket-grid section-gap">
+        <div class="ticket-grid">
           <div>
             <label class="small">Side</label>
             <select id="side">
@@ -110,6 +185,7 @@
         <div class="row section-gap">
           <button onclick="simulateTicket()">Update Ticket</button>
           <button onclick="mockSubmit()">Mock Submit</button>
+          <button onclick="toggleMarketAlert()">Toggle Market Alert</button>
         </div>
 
         <pre id="ticketBox">No ticket action yet.</pre>
@@ -122,10 +198,50 @@
 
       <div class="card">
         <h2>Watchlist</h2>
-        <div class="small">Prototype favorites panel for market discovery.</div>
         <div id="watchlistBox" class="section-gap"></div>
       </div>
+
+      <div class="card">
+        <h2>Alert Preferences</h2>
+        <div id="alertPrefsBox"></div>
+      </div>
+
+      <div class="card">
+        <h2>Notifications</h2>
+        <div id="notificationsBox"></div>
+      </div>
+
+      <div class="card">
+        <h2>Leaderboard</h2>
+        <div id="leaderboardBox"></div>
+      </div>
+
+      <div class="card">
+        <h2>Activity Feed</h2>
+        <div id="activityBox"></div>
+      </div>
     </div>
+  </div>
+</div>
+
+<div id="authModal" class="modal">
+  <div class="modalcard">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2 id="authTitle">Sign In</h2>
+      <button class="secondary" onclick="closeAuth()">Close</button>
+    </div>
+    <div class="section-gap">
+      <label class="small">Email</label>
+      <input id="authEmail" value="nick@example.com" />
+    </div>
+    <div class="section-gap">
+      <label class="small">Password</label>
+      <input id="authPassword" type="password" value="password123" />
+    </div>
+    <div class="row section-gap">
+      <button onclick="submitAuth()">Submit</button>
+    </div>
+    <pre id="authBox">No auth action yet.</pre>
   </div>
 </div>
 
@@ -135,6 +251,10 @@ let selectedMarket = null;
 let latestMarkets = [];
 let currentFamilyFilter = 'All';
 let watchlist = new Set();
+let marketAlerts = new Set();
+let authMode = 'signin';
+let signedIn = false;
+let profileName = 'Guest_User';
 
 function familyOrder(market){
   if (market.market_type === 'detroit_precipitation') return 'Detroit Precipitation';
@@ -144,75 +264,208 @@ function familyOrder(market){
   return 'Other';
 }
 
+function openAuth(mode){
+  authMode = mode;
+  document.getElementById('authTitle').textContent = mode === 'signin' ? 'Sign In' : 'Sign Up';
+  document.getElementById('authModal').classList.add('show');
+}
+function closeAuth(){ document.getElementById('authModal').classList.remove('show'); }
+function submitAuth(){
+  const email = document.getElementById('authEmail').value || 'user@example.com';
+  signedIn = true;
+  profileName = email.split('@')[0];
+  document.getElementById('authBox').textContent = JSON.stringify({
+    mode: authMode,
+    email: email,
+    status: 'prototype_success'
+  }, null, 2);
+  renderProfile();
+}
+function walletAction(type){
+  document.getElementById('walletActionBox').textContent = JSON.stringify({
+    action: type,
+    amount: type === 'deposit' ? '$250.00' : '$100.00',
+    status: 'prototype_only'
+  }, null, 2);
+}
 function recalcEstimate(){
   const qty = Number(document.getElementById('qty').value || 0);
   const price = Number(document.getElementById('limitPrice').value || 0);
   document.getElementById('estCost').value = '$' + ((qty * price) / 100).toFixed(2);
 }
-
+function mockDepth(m){
+  const base = Number(m.price || 50);
+  return [
+    {bid_qty: 120, price: Math.max(1, base - 2), ask_qty: 100},
+    {bid_qty: 95, price: Math.max(1, base - 1), ask_qty: 88},
+    {bid_qty: 80, price: base, ask_qty: 75},
+    {bid_qty: 60, price: Math.min(99, base + 1), ask_qty: 90},
+    {bid_qty: 42, price: Math.min(99, base + 2), ask_qty: 115}
+  ];
+}
+function mockTape(m){
+  const base = Number(m.price || 50);
+  return [
+    {time: '10:24:11', price: base, qty: 15},
+    {time: '10:23:47', price: Math.max(1, base - 1), qty: 22},
+    {time: '10:23:20', price: base, qty: 8},
+    {time: '10:22:55', price: Math.min(99, base + 1), qty: 30},
+    {time: '10:22:10', price: base, qty: 12}
+  ];
+}
+function renderProfile(){
+  document.getElementById('profileBox').innerHTML = `
+    <div class="profileitem">
+      <div><strong>${profileName}</strong></div>
+      <div class="small">${signedIn ? 'Signed in beta profile' : 'Guest profile'} • Detroit weather focus</div>
+    </div>
+    <div class="profileitem">
+      <div class="small">Account Status</div>
+      <div><strong>${signedIn ? 'Active' : 'Guest'}</strong></div>
+    </div>
+    <div class="profileitem">
+      <div class="small">Watched Markets</div>
+      <div><strong>${watchlist.size}</strong></div>
+    </div>
+  `;
+}
+function renderWallet(){
+  document.getElementById('walletBox').innerHTML = `
+    <div class="walletitem">
+      <div class="small">Cash Balance</div>
+      <div><strong>$2,500.00</strong></div>
+    </div>
+    <div class="walletitem">
+      <div class="small">Buying Power</div>
+      <div><strong>$2,100.00</strong></div>
+    </div>
+    <div class="walletitem">
+      <div class="small">Unrealized PnL</div>
+      <div><strong>+$48.20</strong></div>
+    </div>
+  `;
+}
+function renderSettings(){
+  document.getElementById('settingsBox').innerHTML = `
+    <div class="settingitem"><div class="small">Theme</div><div><strong>Dark</strong></div></div>
+    <div class="settingitem"><div class="small">Notification Mode</div><div><strong>Push + Email</strong></div></div>
+    <div class="settingitem"><div class="small">Market Region Focus</div><div><strong>Detroit</strong></div></div>
+  `;
+}
+function renderAlertPrefs(){
+  document.getElementById('alertPrefsBox').innerHTML = `
+    <div class="switchline"><span>Price movement alerts</span><input type="checkbox" checked /></div>
+    <div class="switchline"><span>Detroit precipitation alerts</span><input type="checkbox" checked /></div>
+    <div class="switchline"><span>Tornado market alerts</span><input type="checkbox" /></div>
+    <div class="switchline"><span>Ancestry market alerts</span><input type="checkbox" /></div>
+  `;
+}
+function renderNotifications(){
+  const rows = [
+    selectedMarket ? `Alert tracking ${selectedMarket.label} is ${marketAlerts.has(selectedMarket.market_id) ? 'enabled' : 'disabled'}.` : 'No market selected for alerts yet.',
+    'Detroit precipitation market moved into watchlist review.',
+    'Readiness summary still shows beta_ready.',
+    'New platform activity detected on trending markets.'
+  ];
+  document.getElementById('notificationsBox').innerHTML = rows.map(r => `<div class="notifyitem"><div class="small">${r}</div></div>`).join('');
+}
+function renderDepth(){
+  const box = document.getElementById('depthBox');
+  if(!selectedMarket){ box.innerHTML = '<div class="muted">No market selected yet.</div>'; return; }
+  const rows = mockDepth(selectedMarket);
+  box.innerHTML = rows.map(r => `<div class="depth-row"><div class="bidcell">${r.bid_qty}</div><div>${r.price}¢</div><div class="askcell">${r.ask_qty}</div></div>`).join('');
+}
+function renderTape(){
+  const box = document.getElementById('tapeBox');
+  if(!selectedMarket){ box.innerHTML = '<div class="muted">No market selected yet.</div>'; return; }
+  const rows = mockTape(selectedMarket);
+  box.innerHTML = rows.map(r => `<div class="tape-row"><div>${r.time}</div><div>${r.price}¢</div><div>${r.qty}</div></div>`).join('');
+}
+function renderLeaderboard(){
+  const rows = [
+    {name: 'Nick_F', pnl: '+$482.20', winrate: '61%'},
+    {name: 'MotorCityWx', pnl: '+$355.10', winrate: '58%'},
+    {name: 'StormTape', pnl: '+$292.75', winrate: '55%'}
+  ];
+  document.getElementById('leaderboardBox').innerHTML = rows.map((r, i) => `<div class="leaderitem"><div><strong>#${i+1} ${r.name}</strong></div><div class="small">PnL ${r.pnl} • Win rate ${r.winrate}</div></div>`).join('');
+}
+function renderActivity(){
+  const rows = [
+    'Large buy interest hit Detroit precipitation 2.50 to 3.49 in.',
+    'Tornado EF3 contract spread tightened by 1¢.',
+    'Ancestry update date market volume increased after refresh.',
+    'Weather high temp ladder showed stronger bid support.'
+  ];
+  document.getElementById('activityBox').innerHTML = rows.map(r => `<div class="feeditem"><div class="small">${r}</div></div>`).join('');
+}
+function renderTrending(){
+  const rows = latestMarkets.slice(0, 3);
+  document.getElementById('trendingBox').innerHTML = rows.length ? rows.map(m => `<div class="trenditem"><div><strong>${m.label}</strong></div><div class="small">${familyOrder(m)} • ${m.price}¢ • Bid ${m.bid} / Ask ${m.ask}</div></div>`).join('') : '<div class="muted">No trending markets yet.</div>';
+}
+function renderDetail(){
+  if(!selectedMarket){
+    document.getElementById('detailBox').textContent = 'No market selected yet.';
+    renderDepth(); renderTape(); renderNotifications(); return;
+  }
+  document.getElementById('detailBox').innerHTML = `
+    <div class="detail-title">${selectedMarket.label}</div>
+    <div class="small">${selectedMarket.market_family} • ${selectedMarket.market_type}</div>
+    <div class="detail-price">${selectedMarket.price}¢</div>
+    <div class="spread">Bid ${selectedMarket.bid} / Ask ${selectedMarket.ask}</div>
+    <div class="stats">
+      <div class="stat"><div class="small">Market ID</div><div>${selectedMarket.market_id}</div></div>
+      <div class="stat"><div class="small">Family</div><div>${familyOrder(selectedMarket)}</div></div>
+      <div class="stat"><div class="small">Last Price</div><div>${selectedMarket.price}¢</div></div>
+      <div class="stat"><div class="small">Alert Enabled</div><div>${marketAlerts.has(selectedMarket.market_id) ? 'Yes' : 'No'}</div></div>
+    </div>
+  `;
+  renderDepth(); renderTape(); renderNotifications();
+}
 function selectMarket(marketId){
   selectedMarket = latestMarkets.find(m => m.market_id === marketId) || null;
   if(!selectedMarket) return;
-  document.getElementById('selectedMarketBox').innerHTML = `
-    <div><strong>${selectedMarket.label}</strong></div>
-    <div class="small">${selectedMarket.market_family} • ${selectedMarket.market_type}</div>
-    <div class="small">Bid ${selectedMarket.bid} / Ask ${selectedMarket.ask} • Last ${selectedMarket.price}¢</div>
-  `;
   document.getElementById('limitPrice').value = selectedMarket.ask || selectedMarket.price || 50;
   recalcEstimate();
+  renderDetail();
   applyFilters();
 }
-
 function toggleWatchlist(marketId, ev){
   if(ev) ev.stopPropagation();
-  if(watchlist.has(marketId)) watchlist.delete(marketId);
-  else watchlist.add(marketId);
-  renderWatchlist();
-  applyFilters();
+  if(watchlist.has(marketId)) watchlist.delete(marketId); else watchlist.add(marketId);
+  renderWatchlist(); renderProfile(); renderDetail(); applyFilters();
 }
-
+function toggleMarketAlert(){
+  if(!selectedMarket){ document.getElementById('ticketBox').textContent = 'Select a market first.'; return; }
+  if(marketAlerts.has(selectedMarket.market_id)) marketAlerts.delete(selectedMarket.market_id); else marketAlerts.add(selectedMarket.market_id);
+  renderDetail(); renderNotifications();
+}
 function renderWatchlist(){
   const items = latestMarkets.filter(m => watchlist.has(m.market_id));
-  document.getElementById('watchlistBox').innerHTML = items.length ? items.map(m => `
-    <div class="watchitem">
-      <div><strong>${m.label}</strong></div>
-      <div class="small">${familyOrder(m)} • ${m.price}¢ • Bid ${m.bid} / Ask ${m.ask}</div>
-    </div>
-  `).join('') : '<div class="muted">No favorites yet.</div>';
+  document.getElementById('watchlistBox').innerHTML = items.length ? items.map(m => `<div class="watchitem"><div><strong>${m.label}</strong></div><div class="small">${familyOrder(m)} • ${m.price}¢ • Bid ${m.bid} / Ask ${m.ask}</div></div>`).join('') : '<div class="muted">No favorites yet.</div>';
 }
-
 function renderMarkets(markets){
   const grouped = {};
-  for(const m of markets){
-    const key = familyOrder(m);
-    if(!grouped[key]) grouped[key] = [];
-    grouped[key].push(m);
-  }
-
+  for(const m of markets){ const key = familyOrder(m); if(!grouped[key]) grouped[key] = []; grouped[key].push(m); }
   const order = ['Weather','Detroit Precipitation','Tornado','Ancestry','Other'];
-  const html = order
-    .filter(k => grouped[k] && grouped[k].length)
-    .map(group => `
-      <div class="card">
-        <h3>${group}</h3>
-        <div class="grid">
-          ${grouped[group].map(m => `
-            <div class="market ${selectedMarket && selectedMarket.market_id === m.market_id ? 'active' : ''}" onclick="selectMarket('${m.market_id}')">
-              <div class="star" onclick="toggleWatchlist('${m.market_id}', event)">${watchlist.has(m.market_id) ? '★' : '☆'}</div>
-              <div class="small">${m.market_family} • ${m.market_type}</div>
-              <div style="margin:8px 0 10px 0"><strong>${m.label}</strong></div>
-              <div class="price">${m.price}¢</div>
-              <div class="spread">Bid ${m.bid} / Ask ${m.ask}</div>
-              <div class="small" style="margin-top:10px">${m.market_id}</div>
-            </div>
-          `).join('')}
-        </div>
+  const html = order.filter(k => grouped[k] && grouped[k].length).map(group => `
+    <div class="card">
+      <h3>${group}</h3>
+      <div class="grid">
+        ${grouped[group].map(m => `
+          <div class="market ${selectedMarket && selectedMarket.market_id === m.market_id ? 'active' : ''}" onclick="selectMarket('${m.market_id}')">
+            <div class="star" onclick="toggleWatchlist('${m.market_id}', event)">${watchlist.has(m.market_id) ? '★' : '☆'}</div>
+            <div class="small">${m.market_family} • ${m.market_type}</div>
+            <div style="margin:8px 0 10px 0"><strong>${m.label}</strong></div>
+            <div class="price">${m.price}¢</div>
+            <div class="spread">Bid ${m.bid} / Ask ${m.ask}</div>
+            <div class="small" style="margin-top:10px">${m.market_id}</div>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
-
+    </div>
+  `).join('');
   document.getElementById('marketGroups').innerHTML = html || '<div class="muted">No markets returned.</div>';
 }
-
 function applyFilters(){
   const search = (document.getElementById('searchBox').value || '').toLowerCase().trim();
   let filtered = latestMarkets.filter(m => {
@@ -221,37 +474,29 @@ function applyFilters(){
     const searchOk = !search || (m.label || '').toLowerCase().includes(search) || (m.market_id || '').toLowerCase().includes(search);
     return familyOk && searchOk;
   });
-  renderMarkets(filtered);
-  renderWatchlist();
+  renderMarkets(filtered); renderWatchlist(); renderTrending();
 }
-
 function setFamilyFilter(name, ev){
   currentFamilyFilter = name;
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
   if(ev && ev.target) ev.target.classList.add('active');
   applyFilters();
 }
-
 async function loadHealth(){
   const res = await fetch('/api/health');
   document.getElementById('healthBox').textContent = await res.text();
 }
-
 async function loadReadiness(){
   const res = await fetch('/api/readiness-summary');
   document.getElementById('readinessBox').textContent = await res.text();
 }
-
 async function loadMarkets(){
   const res = await fetch('/api/markets');
   const data = await res.json();
   latestMarkets = data.markets || [];
   applyFilters();
-  if (!selectedMarket && latestMarkets.length){
-    selectMarket(latestMarkets[0].market_id);
-  }
+  if (!selectedMarket && latestMarkets.length) selectMarket(latestMarkets[0].market_id); else renderDetail();
 }
-
 function simulateTicket(){
   recalcEstimate();
   const output = {
@@ -263,12 +508,8 @@ function simulateTicket(){
   };
   document.getElementById('ticketBox').textContent = JSON.stringify(output, null, 2);
 }
-
 function mockSubmit(){
-  if(!selectedMarket){
-    document.getElementById('ticketBox').textContent = 'Select a market first.';
-    return;
-  }
+  if(!selectedMarket){ document.getElementById('ticketBox').textContent = 'Select a market first.'; return; }
   simulateTicket();
   const qty = Number(document.getElementById('qty').value || 0);
   const side = document.getElementById('side').value;
@@ -276,37 +517,33 @@ function mockSubmit(){
   document.getElementById('portfolioBox').textContent = JSON.stringify({
     cash_balance: '$2,500.00',
     watchlist_count: watchlist.size,
-    open_positions: [
-      {
-        market_id: selectedMarket.market_id,
-        label: selectedMarket.label,
-        side: side,
-        qty: qty,
-        avg_price_cents: price
-      }
-    ],
+    alert_count: marketAlerts.size,
+    open_positions: [{ market_id: selectedMarket.market_id, label: selectedMarket.label, side: side, qty: qty, avg_price_cents: price }],
     notes: 'Prototype portfolio panel only. Real order persistence comes in later production phases.'
   }, null, 2);
+  renderProfile();
 }
-
 function toggleAutoRefresh(){
-  if(autoRefresh){
-    clearInterval(autoRefresh);
-    autoRefresh = null;
-  } else {
-    autoRefresh = setInterval(loadMarkets, 10000);
-  }
+  if(autoRefresh){ clearInterval(autoRefresh); autoRefresh = null; }
+  else { autoRefresh = setInterval(loadMarkets, 10000); }
 }
-
 document.getElementById('qty').addEventListener('input', recalcEstimate);
 document.getElementById('limitPrice').addEventListener('input', recalcEstimate);
 
 loadHealth();
 loadReadiness();
 loadMarkets();
+renderLeaderboard();
+renderActivity();
+renderProfile();
+renderWallet();
+renderSettings();
+renderAlertPrefs();
+renderNotifications();
 document.getElementById('portfolioBox').textContent = JSON.stringify({
   cash_balance: '$2,500.00',
   watchlist_count: 0,
+  alert_count: 0,
   open_positions: [],
   notes: 'No positions yet in this prototype portfolio.'
 }, null, 2);
