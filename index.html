@@ -3,36 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weather Markets Live Beta</title>
+  <title>Weather Markets Discovery Beta</title>
   <style>
     body{font-family:Arial,sans-serif;background:#07101d;color:#eef5ff;margin:0;padding:24px}
-    .wrap{max-width:1280px;margin:auto}
+    .wrap{max-width:1450px;margin:auto}
     .hero,.card{background:#0f1b31;border:1px solid #22365d;border-radius:16px;padding:18px;margin-bottom:16px}
     .small{font-size:12px;color:#8ea4ca}
     .row{display:flex;gap:12px;flex-wrap:wrap}
+    .layout{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-    .market{background:#0a1323;border:1px solid #22365d;border-radius:14px;padding:14px}
-    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#13203a;border:1px solid #22365d;font-size:11px;margin-right:6px}
+    .market{background:#0a1323;border:1px solid #22365d;border-radius:14px;padding:14px;cursor:pointer;position:relative}
+    .market.active{outline:2px solid #3b82f6}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#13203a;border:1px solid #22365d;font-size:11px;margin-right:6px;cursor:pointer}
+    .pill.active{background:#1c3158;border-color:#3b82f6}
     button{padding:10px 14px;border:none;border-radius:10px;background:#3b82f6;color:white;font-weight:bold;cursor:pointer}
+    input,select{padding:10px;border-radius:10px;border:1px solid #22365d;background:#0a1323;color:#eef5ff;width:100%;box-sizing:border-box}
     pre{white-space:pre-wrap;background:#0a1323;border:1px solid #22365d;border-radius:10px;padding:12px;overflow:auto}
     h1,h2,h3{margin-top:0}
     .muted{color:#9fb2d6}
     .price{font-size:24px;font-weight:700}
     .spread{font-size:13px;color:#8ea4ca}
+    .ticket-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .section-gap{margin-top:14px}
+    .star{position:absolute;top:10px;right:10px;background:#13203a;border:1px solid #22365d;border-radius:999px;padding:5px 8px;font-size:12px}
+    .watchitem{background:#0a1323;border:1px solid #22365d;border-radius:12px;padding:12px;margin-bottom:10px}
+    @media (max-width: 950px){ .layout{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
 <div class="wrap">
   <div class="hero">
-    <h1>Weather Markets Live Beta</h1>
-    <div class="small">Detroit weather, precipitation, tornado, and ancestry market dashboard.</div>
-    <div style="margin-top:10px">
-      <span class="pill">Weather</span>
-      <span class="pill">Detroit Precipitation</span>
-      <span class="pill">Tornado</span>
-      <span class="pill">Ancestry</span>
-      <span class="pill">Live Polling</span>
-    </div>
+    <h1>Weather Markets Discovery Beta</h1>
+    <div class="small">Search, filter, watchlist, ticket, and portfolio scaffolding across Detroit weather, precipitation, tornado, and ancestry markets.</div>
   </div>
 
   <div class="card">
@@ -44,29 +46,95 @@
     </div>
   </div>
 
-  <div class="card">
-    <h2>System Status</h2>
-    <div class="grid">
-      <div>
-        <h3>Health</h3>
-        <pre id="healthBox">No request made yet.</pre>
+  <div class="layout">
+    <div>
+      <div class="card">
+        <h2>System Status</h2>
+        <div class="grid">
+          <div>
+            <h3>Health</h3>
+            <pre id="healthBox">No request made yet.</pre>
+          </div>
+          <div>
+            <h3>Readiness</h3>
+            <pre id="readinessBox">No request made yet.</pre>
+          </div>
+        </div>
       </div>
-      <div>
-        <h3>Readiness</h3>
-        <pre id="readinessBox">No request made yet.</pre>
+
+      <div class="card">
+        <h2>Market Discovery</h2>
+        <input id="searchBox" placeholder="Search markets by label or id" oninput="applyFilters()" />
+        <div class="section-gap">
+          <span class="pill active" data-filter="All" onclick="setFamilyFilter('All', event)">All</span>
+          <span class="pill" data-filter="Weather" onclick="setFamilyFilter('Weather', event)">Weather</span>
+          <span class="pill" data-filter="Detroit Precipitation" onclick="setFamilyFilter('Detroit Precipitation', event)">Detroit Precipitation</span>
+          <span class="pill" data-filter="Tornado" onclick="setFamilyFilter('Tornado', event)">Tornado</span>
+          <span class="pill" data-filter="Ancestry" onclick="setFamilyFilter('Ancestry', event)">Ancestry</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Markets</h2>
+        <div id="marketGroups"></div>
       </div>
     </div>
-  </div>
 
-  <div class="card">
-    <h2>Markets</h2>
-    <div class="small">Live market cards grouped by market family.</div>
-    <div id="marketGroups"></div>
+    <div>
+      <div class="card">
+        <h2>Market Ticket</h2>
+        <div id="selectedMarketBox" class="small">No market selected yet.</div>
+
+        <div class="ticket-grid section-gap">
+          <div>
+            <label class="small">Side</label>
+            <select id="side">
+              <option value="BUY_YES">BUY YES</option>
+              <option value="BUY_NO">BUY NO</option>
+            </select>
+          </div>
+          <div>
+            <label class="small">Quantity</label>
+            <input id="qty" value="10" />
+          </div>
+          <div>
+            <label class="small">Limit Price</label>
+            <input id="limitPrice" value="50" />
+          </div>
+          <div>
+            <label class="small">Estimated Cost</label>
+            <input id="estCost" value="$5.00" readonly />
+          </div>
+        </div>
+
+        <div class="row section-gap">
+          <button onclick="simulateTicket()">Update Ticket</button>
+          <button onclick="mockSubmit()">Mock Submit</button>
+        </div>
+
+        <pre id="ticketBox">No ticket action yet.</pre>
+      </div>
+
+      <div class="card">
+        <h2>Portfolio</h2>
+        <pre id="portfolioBox"></pre>
+      </div>
+
+      <div class="card">
+        <h2>Watchlist</h2>
+        <div class="small">Prototype favorites panel for market discovery.</div>
+        <div id="watchlistBox" class="section-gap"></div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
 let autoRefresh = null;
+let selectedMarket = null;
+let latestMarkets = [];
+let currentFamilyFilter = 'All';
+let watchlist = new Set();
 
 function familyOrder(market){
   if (market.market_type === 'detroit_precipitation') return 'Detroit Precipitation';
@@ -74,6 +142,43 @@ function familyOrder(market){
   if (market.market_family === 'tornado') return 'Tornado';
   if (market.market_family === 'ancestry') return 'Ancestry';
   return 'Other';
+}
+
+function recalcEstimate(){
+  const qty = Number(document.getElementById('qty').value || 0);
+  const price = Number(document.getElementById('limitPrice').value || 0);
+  document.getElementById('estCost').value = '$' + ((qty * price) / 100).toFixed(2);
+}
+
+function selectMarket(marketId){
+  selectedMarket = latestMarkets.find(m => m.market_id === marketId) || null;
+  if(!selectedMarket) return;
+  document.getElementById('selectedMarketBox').innerHTML = `
+    <div><strong>${selectedMarket.label}</strong></div>
+    <div class="small">${selectedMarket.market_family} • ${selectedMarket.market_type}</div>
+    <div class="small">Bid ${selectedMarket.bid} / Ask ${selectedMarket.ask} • Last ${selectedMarket.price}¢</div>
+  `;
+  document.getElementById('limitPrice').value = selectedMarket.ask || selectedMarket.price || 50;
+  recalcEstimate();
+  applyFilters();
+}
+
+function toggleWatchlist(marketId, ev){
+  if(ev) ev.stopPropagation();
+  if(watchlist.has(marketId)) watchlist.delete(marketId);
+  else watchlist.add(marketId);
+  renderWatchlist();
+  applyFilters();
+}
+
+function renderWatchlist(){
+  const items = latestMarkets.filter(m => watchlist.has(m.market_id));
+  document.getElementById('watchlistBox').innerHTML = items.length ? items.map(m => `
+    <div class="watchitem">
+      <div><strong>${m.label}</strong></div>
+      <div class="small">${familyOrder(m)} • ${m.price}¢ • Bid ${m.bid} / Ask ${m.ask}</div>
+    </div>
+  `).join('') : '<div class="muted">No favorites yet.</div>';
 }
 
 function renderMarkets(markets){
@@ -92,7 +197,8 @@ function renderMarkets(markets){
         <h3>${group}</h3>
         <div class="grid">
           ${grouped[group].map(m => `
-            <div class="market">
+            <div class="market ${selectedMarket && selectedMarket.market_id === m.market_id ? 'active' : ''}" onclick="selectMarket('${m.market_id}')">
+              <div class="star" onclick="toggleWatchlist('${m.market_id}', event)">${watchlist.has(m.market_id) ? '★' : '☆'}</div>
               <div class="small">${m.market_family} • ${m.market_type}</div>
               <div style="margin:8px 0 10px 0"><strong>${m.label}</strong></div>
               <div class="price">${m.price}¢</div>
@@ -105,6 +211,25 @@ function renderMarkets(markets){
     `).join('');
 
   document.getElementById('marketGroups').innerHTML = html || '<div class="muted">No markets returned.</div>';
+}
+
+function applyFilters(){
+  const search = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+  let filtered = latestMarkets.filter(m => {
+    const family = familyOrder(m);
+    const familyOk = currentFamilyFilter === 'All' || family === currentFamilyFilter;
+    const searchOk = !search || (m.label || '').toLowerCase().includes(search) || (m.market_id || '').toLowerCase().includes(search);
+    return familyOk && searchOk;
+  });
+  renderMarkets(filtered);
+  renderWatchlist();
+}
+
+function setFamilyFilter(name, ev){
+  currentFamilyFilter = name;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  if(ev && ev.target) ev.target.classList.add('active');
+  applyFilters();
 }
 
 async function loadHealth(){
@@ -120,7 +245,48 @@ async function loadReadiness(){
 async function loadMarkets(){
   const res = await fetch('/api/markets');
   const data = await res.json();
-  renderMarkets(data.markets || []);
+  latestMarkets = data.markets || [];
+  applyFilters();
+  if (!selectedMarket && latestMarkets.length){
+    selectMarket(latestMarkets[0].market_id);
+  }
+}
+
+function simulateTicket(){
+  recalcEstimate();
+  const output = {
+    selected_market: selectedMarket ? selectedMarket.market_id : null,
+    side: document.getElementById('side').value,
+    quantity: Number(document.getElementById('qty').value || 0),
+    limit_price_cents: Number(document.getElementById('limitPrice').value || 0),
+    estimated_cost_dollars: document.getElementById('estCost').value
+  };
+  document.getElementById('ticketBox').textContent = JSON.stringify(output, null, 2);
+}
+
+function mockSubmit(){
+  if(!selectedMarket){
+    document.getElementById('ticketBox').textContent = 'Select a market first.';
+    return;
+  }
+  simulateTicket();
+  const qty = Number(document.getElementById('qty').value || 0);
+  const side = document.getElementById('side').value;
+  const price = Number(document.getElementById('limitPrice').value || 0);
+  document.getElementById('portfolioBox').textContent = JSON.stringify({
+    cash_balance: '$2,500.00',
+    watchlist_count: watchlist.size,
+    open_positions: [
+      {
+        market_id: selectedMarket.market_id,
+        label: selectedMarket.label,
+        side: side,
+        qty: qty,
+        avg_price_cents: price
+      }
+    ],
+    notes: 'Prototype portfolio panel only. Real order persistence comes in later production phases.'
+  }, null, 2);
 }
 
 function toggleAutoRefresh(){
@@ -132,9 +298,18 @@ function toggleAutoRefresh(){
   }
 }
 
+document.getElementById('qty').addEventListener('input', recalcEstimate);
+document.getElementById('limitPrice').addEventListener('input', recalcEstimate);
+
 loadHealth();
 loadReadiness();
 loadMarkets();
+document.getElementById('portfolioBox').textContent = JSON.stringify({
+  cash_balance: '$2,500.00',
+  watchlist_count: 0,
+  open_positions: [],
+  notes: 'No positions yet in this prototype portfolio.'
+}, null, 2);
 </script>
 </body>
 </html>
