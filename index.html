@@ -3,22 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weather Markets Reporting Beta</title>
+  <title>Weather Markets Multi-Market Beta</title>
   <style>
     body{font-family:Arial,sans-serif;background:#07101d;color:#eef5ff;margin:0;padding:16px}
-    .wrap{max-width:1620px;margin:auto}
+    .wrap{max-width:1650px;margin:auto}
     .hero,.card,.modalcard{background:#0f1b31;border:1px solid #22365d;border-radius:16px;padding:16px;margin-bottom:16px}
     .small{font-size:12px;color:#8ea4ca}
     .row{display:flex;gap:10px;flex-wrap:wrap}
     .layout{display:grid;grid-template-columns:1.02fr .98fr;gap:16px}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
     .rightgrid{display:grid;grid-template-columns:1fr;gap:16px}
-    .market{background:#0a1323;border:1px solid #22365d;border-radius:14px;padding:14px;cursor:pointer;position:relative}
+    .boardgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+    .market,.boardcard{background:#0a1323;border:1px solid #22365d;border-radius:14px;padding:14px;cursor:pointer;position:relative}
     .market.active{outline:2px solid #3b82f6}
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#13203a;border:1px solid #22365d;font-size:11px;margin-right:6px;cursor:pointer}
     .pill.active{background:#1c3158;border-color:#3b82f6}
     button{padding:10px 14px;border:none;border-radius:10px;background:#3b82f6;color:white;font-weight:bold;cursor:pointer}
     button.secondary{background:#1c3158}
+    button.ghost{background:#13203a;border:1px solid #22365d}
     input,select,textarea{padding:10px;border-radius:10px;border:1px solid #22365d;background:#0a1323;color:#eef5ff;width:100%;box-sizing:border-box}
     pre{white-space:pre-wrap;background:#0a1323;border:1px solid #22365d;border-radius:10px;padding:12px;overflow:auto}
     h1,h2,h3{margin-top:0}
@@ -27,7 +29,7 @@
     .ticket-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .section-gap{margin-top:14px}
     .star{position:absolute;top:10px;right:10px;background:#13203a;border:1px solid #22365d;border-radius:999px;padding:5px 8px;font-size:12px}
-    .watchitem,.feeditem,.leaderitem,.trenditem,.notifyitem,.profileitem,.walletitem,.settingitem,.helpitem,.checkitem,.analyticitem,.insightitem,.calendaritem,.reportitem{background:#0a1323;border:1px solid #22365d;border-radius:12px;padding:12px;margin-bottom:10px}
+    .watchitem,.feeditem,.leaderitem,.trenditem,.notifyitem,.profileitem,.walletitem,.settingitem,.helpitem,.checkitem,.analyticitem,.insightitem,.calendaritem,.reportitem,.modeitem{background:#0a1323;border:1px solid #22365d;border-radius:12px;padding:12px;margin-bottom:10px}
     .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
     .stat{background:#0a1323;border:1px solid #22365d;border-radius:12px;padding:12px}
     .detail-title{font-size:18px;font-weight:700;margin-bottom:6px}
@@ -41,14 +43,27 @@
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
     .modal.show{display:flex}
     .modalcard{max-width:480px;width:100%;margin:0}
+    .ticker-shell{background:#081120;border:1px solid #22365d;border-radius:14px;padding:10px 0;overflow:hidden;margin-bottom:16px}
+    .ticker-track{display:flex;gap:24px;white-space:nowrap;will-change:transform;animation:ticker-scroll 36s linear infinite}
+    .ticker-item{display:inline-flex;align-items:center;gap:8px;padding:0 6px;font-size:13px}
+    .ticker-label{color:#eef5ff;font-weight:700}
+    .ticker-price{color:#8ce1b0}
+    .ticker-spread{color:#8ea4ca}
+    .modegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .board-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    @keyframes ticker-scroll {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
     @media (max-width: 980px){ .layout{grid-template-columns:1fr} }
     @media (max-width: 640px){
       body{padding:12px}
-      .ticket-grid,.stats{grid-template-columns:1fr}
-      .grid{grid-template-columns:1fr}
+      .ticket-grid,.stats,.modegrid{grid-template-columns:1fr}
+      .grid,.boardgrid{grid-template-columns:1fr}
       .hero,.card,.modalcard{padding:14px}
       .price{font-size:22px}
       .detail-price{font-size:24px}
+      .ticker-item{font-size:12px}
     }
   </style>
 </head>
@@ -57,14 +72,18 @@
   <div class="hero">
     <div class="row" style="justify-content:space-between;align-items:center">
       <div>
-        <h1>Weather Markets Reporting Beta</h1>
-        <div class="small">Detroit weather, precipitation, tornado, and ancestry markets with analytics, reporting, export, and planning scaffolding.</div>
+        <h1>Weather Markets Multi-Market Beta</h1>
+        <div class="small">Detroit weather, precipitation, tornado, and ancestry markets with a scrolling tracker, multi-market board, and multiple position-taking options.</div>
       </div>
       <div class="row">
         <button class="secondary" onclick="openAuth('signin')">Sign In</button>
         <button onclick="openAuth('signup')">Sign Up</button>
       </div>
     </div>
+  </div>
+
+  <div class="ticker-shell">
+    <div id="tickerTrack" class="ticker-track"></div>
   </div>
 
   <div class="card">
@@ -91,6 +110,12 @@
       <div class="card"><h2>Market Calendar</h2><div id="calendarBox"></div></div>
 
       <div class="card">
+        <h2>Multi-Market Board</h2>
+        <div class="small">Use quick position buttons to stage different kinds of market positions across several contracts.</div>
+        <div id="multiMarketBoard" class="boardgrid section-gap"></div>
+      </div>
+
+      <div class="card">
         <h2>Market Discovery</h2>
         <input id="searchBox" placeholder="Search markets by label or id" oninput="applyFilters()" />
         <div class="section-gap">
@@ -113,11 +138,23 @@
       <div class="card"><h2>Help Center</h2><div id="helpBox"></div></div>
       <div class="card"><h2>Strategy Notes</h2><textarea id="strategyNotes" rows="5">Detroit precipitation markets appear best for medium-term monitoring. Tornado contracts show sharper event-driven movement.</textarea><div class="row section-gap"><button onclick="saveStrategyNotes()">Save Notes</button></div><pre id="strategyBox">No strategy note action yet.</pre></div>
       <div class="card"><h2>Reports & Export</h2><div id="reportBox"></div><div class="row section-gap"><button onclick="exportReport('csv')">Export CSV</button><button class="secondary" onclick="exportReport('json')">Export JSON</button></div><pre id="exportBox">No export action yet.</pre></div>
+
+      <div class="card">
+        <h2>Position Modes</h2>
+        <div class="modegrid">
+          <div class="modeitem"><strong>Buy Yes</strong><div class="small">Direct bullish position on outcome.</div><div class="row section-gap"><button class="ghost" onclick="setPositionMode('BUY_YES')">Use</button></div></div>
+          <div class="modeitem"><strong>Buy No</strong><div class="small">Direct bearish position on outcome.</div><div class="row section-gap"><button class="ghost" onclick="setPositionMode('BUY_NO')">Use</button></div></div>
+          <div class="modeitem"><strong>Fade Move</strong><div class="small">Contrarian preset against sharp price spikes.</div><div class="row section-gap"><button class="ghost" onclick="setPositionMode('FADE_MOVE')">Use</button></div></div>
+          <div class="modeitem"><strong>Breakout</strong><div class="small">Momentum-style preset for follow-through.</div><div class="row section-gap"><button class="ghost" onclick="setPositionMode('BREAKOUT')">Use</button></div></div>
+        </div>
+        <pre id="modeBox">No position mode selected yet.</pre>
+      </div>
+
       <div class="card"><h2>Market Insight</h2><div id="insightBox"></div></div>
       <div class="card"><h2>Market Detail</h2><div id="detailBox" class="small">No market selected yet.</div></div>
       <div class="card"><h2>Market Depth</h2><div class="depth-row depth-head"><div>Bid Qty</div><div>Price</div><div>Ask Qty</div></div><div id="depthBox"></div></div>
       <div class="card"><h2>Trade Tape</h2><div class="tape-row tape-head"><div>Time</div><div>Price</div><div>Qty</div></div><div id="tapeBox"></div></div>
-      <div class="card"><h2>Market Ticket</h2><div class="ticket-grid"><div><label class="small">Side</label><select id="side"><option value="BUY_YES">BUY YES</option><option value="BUY_NO">BUY NO</option></select></div><div><label class="small">Quantity</label><input id="qty" value="10" /></div><div><label class="small">Limit Price</label><input id="limitPrice" value="50" /></div><div><label class="small">Estimated Cost</label><input id="estCost" value="$5.00" readonly /></div></div><div class="row section-gap"><button onclick="simulateTicket()">Update Ticket</button><button onclick="mockSubmit()">Mock Submit</button><button onclick="toggleMarketAlert()">Toggle Market Alert</button></div><pre id="ticketBox">No ticket action yet.</pre></div>
+      <div class="card"><h2>Market Ticket</h2><div class="ticket-grid"><div><label class="small">Side</label><select id="side"><option value="BUY_YES">BUY YES</option><option value="BUY_NO">BUY NO</option><option value="FADE_MOVE">FADE MOVE</option><option value="BREAKOUT">BREAKOUT</option></select></div><div><label class="small">Quantity</label><input id="qty" value="10" /></div><div><label class="small">Limit Price</label><input id="limitPrice" value="50" /></div><div><label class="small">Estimated Cost</label><input id="estCost" value="$5.00" readonly /></div></div><div class="row section-gap"><button onclick="simulateTicket()">Update Ticket</button><button onclick="mockSubmit()">Mock Submit</button><button onclick="toggleMarketAlert()">Toggle Market Alert</button></div><pre id="ticketBox">No ticket action yet.</pre></div>
       <div class="card"><h2>Portfolio</h2><pre id="portfolioBox"></pre></div>
       <div class="card"><h2>Watchlist</h2><div id="watchlistBox" class="section-gap"></div></div>
       <div class="card"><h2>Alert Preferences</h2><div id="alertPrefsBox"></div></div>
@@ -145,6 +182,7 @@
 let autoRefresh = null, selectedMarket = null, latestMarkets = [], currentFamilyFilter = 'All';
 let watchlist = new Set(), marketAlerts = new Set();
 let authMode = 'signin', signedIn = false, profileName = 'Guest_User';
+let currentPositionMode = 'BUY_YES';
 
 function familyOrder(m){ if(m.market_type==='detroit_precipitation') return 'Detroit Precipitation'; if(m.market_family==='weather') return 'Weather'; if(m.market_family==='tornado') return 'Tornado'; if(m.market_family==='ancestry') return 'Ancestry'; return 'Other'; }
 function openAuth(mode){ authMode=mode; authTitle.textContent = mode==='signin' ? 'Sign In' : 'Sign Up'; authModal.classList.add('show'); }
@@ -154,56 +192,54 @@ function walletAction(type){ walletActionBox.textContent=JSON.stringify({action:
 function saveStrategyNotes(){ strategyBox.textContent = JSON.stringify({status:'saved_prototype_only', notes: strategyNotes.value}, null, 2); }
 function exportReport(type){ exportBox.textContent = JSON.stringify({report:'performance_snapshot', export_type:type, status:'prototype_only'}, null, 2); }
 function recalcEstimate(){ const q=Number(qty.value||0), p=Number(limitPrice.value||0); estCost.value='$'+((q*p)/100).toFixed(2); }
+function setPositionMode(mode){
+  currentPositionMode = mode;
+  side.value = mode;
+  modeBox.textContent = JSON.stringify({selected_mode: mode, status: 'prototype_selected'}, null, 2);
+}
+function quickStage(marketId, mode){
+  const market = latestMarkets.find(m => m.market_id === marketId);
+  if(!market) return;
+  selectedMarket = market;
+  setPositionMode(mode);
+  limitPrice.value = market.ask || market.price || 50;
+  qty.value = mode === 'BREAKOUT' ? 15 : mode === 'FADE_MOVE' ? 8 : 10;
+  recalcEstimate();
+  renderDetail();
+  simulateTicket();
+}
+function renderMultiMarketBoard(){
+  const items = latestMarkets.slice(0, 6);
+  multiMarketBoard.innerHTML = items.length ? items.map(m => `
+    <div class="boardcard">
+      <div><strong>${m.label}</strong></div>
+      <div class="small">${familyOrder(m)} • ${m.price}¢ • Bid ${m.bid} / Ask ${m.ask}</div>
+      <div class="board-actions">
+        <button class="ghost" onclick="quickStage('${m.market_id}','BUY_YES')">Buy Yes</button>
+        <button class="ghost" onclick="quickStage('${m.market_id}','BUY_NO')">Buy No</button>
+        <button class="ghost" onclick="quickStage('${m.market_id}','FADE_MOVE')">Fade</button>
+        <button class="ghost" onclick="quickStage('${m.market_id}','BREAKOUT')">Breakout</button>
+      </div>
+    </div>
+  `).join('') : '<div class="small">No markets loaded yet.</div>';
+}
 function mockDepth(m){ const b=Number(m.price||50); return [{bid_qty:120,price:Math.max(1,b-2),ask_qty:100},{bid_qty:95,price:Math.max(1,b-1),ask_qty:88},{bid_qty:80,price:b,ask_qty:75},{bid_qty:60,price:Math.min(99,b+1),ask_qty:90},{bid_qty:42,price:Math.min(99,b+2),ask_qty:115}]; }
 function mockTape(m){ const b=Number(m.price||50); return [{time:'10:24:11',price:b,qty:15},{time:'10:23:47',price:Math.max(1,b-1),qty:22},{time:'10:23:20',price:b,qty:8},{time:'10:22:55',price:Math.min(99,b+1),qty:30},{time:'10:22:10',price:b,qty:12}]; }
-
-function renderOnboarding(){
-  onboardingBox.innerHTML = `
-    <div class="checkitem"><div><strong>${signedIn ? '✓' : '1.'} Create account</strong></div><div class="small">${signedIn ? 'Account shell activated.' : 'Use sign up to create your beta account shell.'}</div></div>
-    <div class="checkitem"><div><strong>${selectedMarket ? '✓' : '2.'} Explore a market</strong></div><div class="small">${selectedMarket ? 'You selected a market.' : 'Select a weather, tornado, or ancestry market.'}</div></div>
-    <div class="checkitem"><div><strong>${watchlist.size ? '✓' : '3.'} Add to watchlist</strong></div><div class="small">${watchlist.size ? 'Watchlist has favorites.' : 'Favorite one or more markets.'}</div></div>
-    <div class="checkitem"><div><strong>${marketAlerts.size ? '✓' : '4.'} Turn on alerts</strong></div><div class="small">${marketAlerts.size ? 'Market alerts enabled.' : 'Enable at least one market alert.'}</div></div>
-  `;
+function renderTicker(){
+  const items = latestMarkets.length ? latestMarkets : [
+    {label:'DTW High 50–54°F', price:48, bid:47, ask:49},
+    {label:'Detroit monthly precipitation 2.50 to 3.49 in', price:31, bid:30, ask:32},
+    {label:'Strongest Tornado 2026 EF3', price:54, bid:53, ask:55},
+    {label:'Ancestry update Sep 16 to Oct 15 2026', price:38, bid:37, ask:39}
+  ];
+  tickerTrack.innerHTML = items.concat(items).map(m => `<div class="ticker-item"><span class="ticker-label">${m.label}</span><span class="ticker-price">${m.price}¢</span><span class="ticker-spread">Bid ${m.bid} / Ask ${m.ask}</span></div>`).join('');
 }
-function renderAnalytics(){
-  analyticsBox.innerHTML = `
-    <div class="analyticitem"><div class="small">30D PnL</div><div><strong>+$482.20</strong></div></div>
-    <div class="analyticitem"><div class="small">Win Rate</div><div><strong>61%</strong></div></div>
-    <div class="analyticitem"><div class="small">Avg Entry Price</div><div><strong>43¢</strong></div></div>
-    <div class="analyticitem"><div class="small">Best Sector</div><div><strong>Detroit Precipitation</strong></div></div>
-  `;
-}
-function renderCalendar(){
-  calendarBox.innerHTML = `
-    <div class="calendaritem"><div><strong>Today 9:00 AM</strong></div><div class="small">Detroit weather update window</div></div>
-    <div class="calendaritem"><div><strong>Today 1:00 PM</strong></div><div class="small">Tornado risk reassessment checkpoint</div></div>
-    <div class="calendaritem"><div><strong>Tomorrow 8:30 AM</strong></div><div class="small">Market open summary review</div></div>
-  `;
-}
-function renderHelp(){
-  helpBox.innerHTML = `
-    <div class="helpitem"><div><strong>How do I place a trade?</strong></div><div class="small">Select a market, choose side, quantity, limit price, and use the ticket.</div></div>
-    <div class="helpitem"><div><strong>What is Detroit precipitation?</strong></div><div class="small">These markets track precipitation outcomes tied to Detroit-focused contracts.</div></div>
-    <div class="helpitem"><div><strong>What does readiness mean?</strong></div><div class="small">Readiness summarizes beta platform status from the backend.</div></div>
-  `;
-}
-function renderReports(){
-  reportBox.innerHTML = `
-    <div class="reportitem"><div><strong>Daily Summary</strong></div><div class="small">Snapshot of positions, alerts, and top movers.</div></div>
-    <div class="reportitem"><div><strong>Performance Report</strong></div><div class="small">PnL, win rate, and activity overview.</div></div>
-    <div class="reportitem"><div><strong>Market Intelligence</strong></div><div class="small">Trending contracts and recent quote behavior.</div></div>
-  `;
-}
-function renderInsight(){
-  if(!selectedMarket){
-    insightBox.innerHTML = '<div class="insightitem"><div class="small">Select a market to view contextual insights.</div></div>';
-    return;
-  }
-  insightBox.innerHTML = `
-    <div class="insightitem"><div><strong>${selectedMarket.label}</strong></div><div class="small">Current spread is ${selectedMarket.ask - selectedMarket.bid}¢. Prototype insight suggests monitoring relative bid support.</div></div>
-    <div class="insightitem"><div><strong>Observed Pattern</strong></div><div class="small">${familyOrder(selectedMarket)} contracts appear more active when volume clusters around the mid-price.</div></div>
-  `;
-}
+function renderOnboarding(){ onboardingBox.innerHTML = `<div class="checkitem"><div><strong>${signedIn ? '✓' : '1.'} Create account</strong></div><div class="small">${signedIn ? 'Account shell activated.' : 'Use sign up to create your beta account shell.'}</div></div><div class="checkitem"><div><strong>${selectedMarket ? '✓' : '2.'} Explore a market</strong></div><div class="small">${selectedMarket ? 'You selected a market.' : 'Select a weather, tornado, or ancestry market.'}</div></div><div class="checkitem"><div><strong>${watchlist.size ? '✓' : '3.'} Add to watchlist</strong></div><div class="small">${watchlist.size ? 'Watchlist has favorites.' : 'Favorite one or more markets.'}</div></div><div class="checkitem"><div><strong>${marketAlerts.size ? '✓' : '4.'} Turn on alerts</strong></div><div class="small">${marketAlerts.size ? 'Market alerts enabled.' : 'Enable at least one market alert.'}</div></div>`; }
+function renderAnalytics(){ analyticsBox.innerHTML = `<div class="analyticitem"><div class="small">30D PnL</div><div><strong>+$482.20</strong></div></div><div class="analyticitem"><div class="small">Win Rate</div><div><strong>61%</strong></div></div><div class="analyticitem"><div class="small">Avg Entry Price</div><div><strong>43¢</strong></div></div><div class="analyticitem"><div class="small">Best Sector</div><div><strong>Detroit Precipitation</strong></div></div>`; }
+function renderCalendar(){ calendarBox.innerHTML = `<div class="calendaritem"><div><strong>Today 9:00 AM</strong></div><div class="small">Detroit weather update window</div></div><div class="calendaritem"><div><strong>Today 1:00 PM</strong></div><div class="small">Tornado risk reassessment checkpoint</div></div><div class="calendaritem"><div><strong>Tomorrow 8:30 AM</strong></div><div class="small">Market open summary review</div></div>`; }
+function renderHelp(){ helpBox.innerHTML = `<div class="helpitem"><div><strong>How do I place a trade?</strong></div><div class="small">Select a market, choose side, quantity, limit price, and use the ticket.</div></div><div class="helpitem"><div><strong>What is Detroit precipitation?</strong></div><div class="small">These markets track precipitation outcomes tied to Detroit-focused contracts.</div></div><div class="helpitem"><div><strong>What does readiness mean?</strong></div><div class="small">Readiness summarizes beta platform status from the backend.</div></div>`; }
+function renderReports(){ reportBox.innerHTML = `<div class="reportitem"><div><strong>Daily Summary</strong></div><div class="small">Snapshot of positions, alerts, and top movers.</div></div><div class="reportitem"><div><strong>Performance Report</strong></div><div class="small">PnL, win rate, and activity overview.</div></div><div class="reportitem"><div><strong>Market Intelligence</strong></div><div class="small">Trending contracts and recent quote behavior.</div></div>`; }
+function renderInsight(){ if(!selectedMarket){ insightBox.innerHTML = '<div class="insightitem"><div class="small">Select a market to view contextual insights.</div></div>'; return; } insightBox.innerHTML = `<div class="insightitem"><div><strong>${selectedMarket.label}</strong></div><div class="small">Current spread is ${selectedMarket.ask - selectedMarket.bid}¢. Prototype insight suggests monitoring relative bid support.</div></div><div class="insightitem"><div><strong>Observed Pattern</strong></div><div class="small">${familyOrder(selectedMarket)} contracts appear more active when volume clusters around the mid-price.</div></div>`; }
 function renderProfile(){ profileBox.innerHTML = `<div class="profileitem"><div><strong>${profileName}</strong></div><div class="small">${signedIn ? 'Signed in beta profile' : 'Guest profile'} • Detroit weather focus</div></div><div class="profileitem"><div class="small">Account Status</div><div><strong>${signedIn ? 'Active' : 'Guest'}</strong></div></div><div class="profileitem"><div class="small">Watched Markets</div><div><strong>${watchlist.size}</strong></div></div>`; }
 function renderWallet(){ walletBox.innerHTML = `<div class="walletitem"><div class="small">Cash Balance</div><div><strong>$2,500.00</strong></div></div><div class="walletitem"><div class="small">Buying Power</div><div><strong>$2,100.00</strong></div></div><div class="walletitem"><div class="small">Unrealized PnL</div><div><strong>+$48.20</strong></div></div>`; }
 function renderSettings(){ settingsBox.innerHTML = `<div class="settingitem"><div class="small">Theme</div><div><strong>Dark</strong></div></div><div class="settingitem"><div class="small">Notification Mode</div><div><strong>Push + Email</strong></div></div><div class="settingitem"><div class="small">Market Region Focus</div><div><strong>Detroit</strong></div></div>`; }
@@ -220,17 +256,17 @@ function toggleWatchlist(id,ev){ if(ev) ev.stopPropagation(); watchlist.has(id)?
 function toggleMarketAlert(){ if(!selectedMarket){ ticketBox.textContent='Select a market first.'; return; } marketAlerts.has(selectedMarket.market_id)?marketAlerts.delete(selectedMarket.market_id):marketAlerts.add(selectedMarket.market_id); renderDetail(); renderNotifications(); renderOnboarding(); }
 function renderWatchlist(){ const items=latestMarkets.filter(m=>watchlist.has(m.market_id)); watchlistBox.innerHTML=items.length?items.map(m=>`<div class="watchitem"><div><strong>${m.label}</strong></div><div class="small">${familyOrder(m)} • ${m.price}¢ • Bid ${m.bid} / Ask ${m.ask}</div></div>`).join(''):'<div class="small">No favorites yet.</div>'; }
 function renderMarkets(markets){ const grouped={}; for(const m of markets){ const k=familyOrder(m); if(!grouped[k]) grouped[k]=[]; grouped[k].push(m); } const order=['Weather','Detroit Precipitation','Tornado','Ancestry','Other']; marketGroups.innerHTML=order.filter(k=>grouped[k]&&grouped[k].length).map(group=>`<div class="card"><h3>${group}</h3><div class="grid">${grouped[group].map(m=>`<div class="market ${selectedMarket&&selectedMarket.market_id===m.market_id?'active':''}" onclick="selectMarket('${m.market_id}')"><div class="star" onclick="toggleWatchlist('${m.market_id}', event)">${watchlist.has(m.market_id)?'★':'☆'}</div><div class="small">${m.market_family} • ${m.market_type}</div><div style="margin:8px 0 10px 0"><strong>${m.label}</strong></div><div class="price">${m.price}¢</div><div class="spread">Bid ${m.bid} / Ask ${m.ask}</div><div class="small" style="margin-top:10px">${m.market_id}</div></div>`).join('')}</div></div>`).join('')||'<div class="small">No markets returned.</div>'; }
-function applyFilters(){ const search=(searchBox.value||'').toLowerCase().trim(); const filtered=latestMarkets.filter(m=>{ const fam=familyOrder(m); return (currentFamilyFilter==='All'||fam===currentFamilyFilter) && (!search || (m.label||'').toLowerCase().includes(search) || (m.market_id||'').toLowerCase().includes(search)); }); renderMarkets(filtered); renderWatchlist(); renderTrending(); }
+function applyFilters(){ const search=(searchBox.value||'').toLowerCase().trim(); const filtered=latestMarkets.filter(m=>{ const fam=familyOrder(m); return (currentFamilyFilter==='All'||fam===currentFamilyFilter) && (!search || (m.label||'').toLowerCase().includes(search) || (m.market_id||'').toLowerCase().includes(search)); }); renderMarkets(filtered); renderWatchlist(); renderTrending(); renderMultiMarketBoard(); }
 function setFamilyFilter(name, ev){ currentFamilyFilter=name; document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); if(ev&&ev.target) ev.target.classList.add('active'); applyFilters(); }
 async function loadHealth(){ const res=await fetch('/api/health'); healthBox.textContent=await res.text(); }
 async function loadReadiness(){ const res=await fetch('/api/readiness-summary'); readinessBox.textContent=await res.text(); }
-async function loadMarkets(){ const res=await fetch('/api/markets'); const data=await res.json(); latestMarkets=data.markets||[]; applyFilters(); if(!selectedMarket&&latestMarkets.length) selectMarket(latestMarkets[0].market_id); else renderDetail(); }
-function simulateTicket(){ recalcEstimate(); ticketBox.textContent=JSON.stringify({selected_market:selectedMarket?selectedMarket.market_id:null,side:side.value,quantity:Number(qty.value||0),limit_price_cents:Number(limitPrice.value||0),estimated_cost_dollars:estCost.value},null,2); }
-function mockSubmit(){ if(!selectedMarket){ ticketBox.textContent='Select a market first.'; return; } simulateTicket(); portfolioBox.textContent=JSON.stringify({cash_balance:'$2,500.00',watchlist_count:watchlist.size,alert_count:marketAlerts.size,open_positions:[{market_id:selectedMarket.market_id,label:selectedMarket.label,side:side.value,qty:Number(qty.value||0),avg_price_cents:Number(limitPrice.value||0)}],notes:'Prototype portfolio panel only. Real order persistence comes in later production phases.'},null,2); renderProfile(); renderOnboarding(); renderAnalytics(); }
+async function loadMarkets(){ const res=await fetch('/api/markets'); const data=await res.json(); latestMarkets=data.markets||[]; renderTicker(); applyFilters(); if(!selectedMarket&&latestMarkets.length) selectMarket(latestMarkets[0].market_id); else renderDetail(); }
+function simulateTicket(){ recalcEstimate(); ticketBox.textContent=JSON.stringify({selected_market:selectedMarket?selectedMarket.market_id:null,side:side.value,position_mode:currentPositionMode,quantity:Number(qty.value||0),limit_price_cents:Number(limitPrice.value||0),estimated_cost_dollars:estCost.value},null,2); }
+function mockSubmit(){ if(!selectedMarket){ ticketBox.textContent='Select a market first.'; return; } simulateTicket(); portfolioBox.textContent=JSON.stringify({cash_balance:'$2,500.00',watchlist_count:watchlist.size,alert_count:marketAlerts.size,open_positions:[{market_id:selectedMarket.market_id,label:selectedMarket.label,side:side.value,position_mode:currentPositionMode,qty:Number(qty.value||0),avg_price_cents:Number(limitPrice.value||0)}],notes:'Prototype portfolio panel only. Real order persistence comes in later production phases.'},null,2); renderProfile(); renderOnboarding(); renderAnalytics(); }
 function toggleAutoRefresh(){ if(autoRefresh){ clearInterval(autoRefresh); autoRefresh=null; } else { autoRefresh=setInterval(loadMarkets,10000); } }
 
 qty.addEventListener('input', recalcEstimate); limitPrice.addEventListener('input', recalcEstimate);
-loadHealth(); loadReadiness(); loadMarkets(); renderLeaderboard(); renderActivity(); renderProfile(); renderWallet(); renderSettings(); renderHelp(); renderReports(); renderCalendar(); renderAlertPrefs(); renderNotifications(); renderOnboarding(); renderAnalytics(); renderInsight();
+loadHealth(); loadReadiness(); loadMarkets(); renderLeaderboard(); renderActivity(); renderProfile(); renderWallet(); renderSettings(); renderHelp(); renderReports(); renderCalendar(); renderAlertPrefs(); renderNotifications(); renderOnboarding(); renderAnalytics(); renderInsight(); renderTicker(); renderMultiMarketBoard(); setPositionMode('BUY_YES');
 portfolioBox.textContent=JSON.stringify({cash_balance:'$2,500.00',watchlist_count:0,alert_count:0,open_positions:[],notes:'No positions yet in this prototype portfolio.'},null,2);
 </script>
 </body>
